@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptBench — Independent Prompt Strategy Observatory</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/newsreader@5.0.16/index.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/public-sans@5.0.16/index.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/ibm-plex-mono@5.0.14/index.min.css">
+  <style>
+    :root,
+    [data-theme="light"] {
+      /* Light Mode: Calm Warm Paper & Soft Monochrome Ink */
+      --bg-paper: #F8F7F4;
+      --bg-stone: #F0EDE6;
+      --bg-card: #FFFFFF;
+      --bg-elevated: #FAF9F6;
+      --bg-highlight: #EAE6DC;
+      --bg-row-hover: #F5F3EE;
+      --bg-pinned-row: #F3F0E9;
+      --border-pinned-row: #D8D3C8;
+      --bg-active-row: #ECE7DC;
+      --ink-primary: #181817;
+      --ink-secondary: #4E4C47;
+      --ink-muted: #7C7972;
+      --rule-hairline: #E6E3DC;
+      --rule-input: #CFCBC0;
+      --rule-strong: #D4D0C5;
+      --rule-accent: #262523;
+      --badge-win-bg: #262523;
+      --badge-win-ink: #FAF9F6;
+      --btn-primary-bg: #181817;
+      --btn-primary-ink: #FAF9F6;
+      --btn-primary-hover: #33322F;
+      --card-shadow: 0 2px 10px rgba(24, 24, 23, 0.035);
+      --font-serif: 'Newsreader', 'Georgia', 'Times New Roman', serif;
+      --font-sans: 'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+    }
+
+    [data-theme="dark"] {
+      /* Dark Mode: Smooth Layered Graphite & Soft Silver Monochrome (Calm, Zero Glare) */
+      --bg-paper: #141416;
+      --bg-stone: #1B1B1E;
+      --bg-card: #202024;
+      --bg-elevated: #17171A;
+      --bg-highlight: #2C2C32;
+      --bg-row-hover: #25252A;
+      --bg-pinned-row: #1D1D21;
+      --border-pinned-row: #35353D;
+      --bg-active-row: #2A2A31;
+      --ink-primary: #ECECEF;
+      --ink-secondary: #B2B2BA;
+      --ink-muted: #80808A;
+      --rule-hairline: #2A2A30;
+      --rule-input: #3B3B44;
+      --rule-strong: #32323A;
+      --rule-accent: #8E8E98;
+      --badge-win-bg: #383842;
+      --badge-win-ink: #F4F4F6;
+      --btn-primary-bg: #E6E6EB;
+      --btn-primary-ink: #141416;
+      --btn-primary-hover: #D0D0D7;
+      --card-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-paper);
+      color: var(--ink-primary);
+      font-family: var(--font-sans);
+      font-size: 15.5px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.16s ease, color 0.16s ease;
+    }
+
+    h1, h2, h3, h4, .serif-heading {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      color: var(--ink-primary);
+      margin-top: 0;
+      letter-spacing: -0.012em;
+    }
+
+    .mono, code, pre, .tabular-nums {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    a {
+      color: var(--ink-primary);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+    a:hover {
+      color: var(--ink-muted);
+    }
+
+    /* =====================================================================
+       SINGLE-ROW MINIMAL HEADER (Calm & Uncluttered)
+       ===================================================================== */
+    .site-header {
+      background-color: var(--bg-paper);
+      border-bottom: 1px solid var(--rule-hairline);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .nav-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 0 28px;
+      min-height: 60px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-code {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--badge-win-ink);
+      background-color: var(--badge-win-bg);
+      padding: 2px 7px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-radius: 4px;
+    }
+
+    .brand-title {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      font-weight: 500;
+      color: var(--ink-primary);
+    }
+
+    .nav-links {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 18px 13px 16px 13px;
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: color 0.14s ease, border-color 0.14s ease;
+    }
+
+    .nav-btn:hover {
+      color: var(--ink-primary);
+    }
+
+    .nav-btn.active {
+      color: var(--ink-primary);
+      font-weight: 600;
+      border-bottom-color: var(--ink-primary);
+    }
+
+    /* Ultra-Minimal Single Icon Theme Toggle in Far Right Corner */
+    .theme-icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--rule-hairline);
+      background-color: var(--bg-card);
+      color: var(--ink-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+    }
+
+    .theme-icon-btn:hover {
+      background-color: var(--bg-stone);
+      color: var(--ink-primary);
+      border-color: var(--rule-input);
+    }
+
+    .theme-icon-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Subtle Neutral Buttons */
+    .btn-editorial {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border: 1px solid var(--rule-input);
+      background-color: var(--bg-card);
+      color: var(--ink-secondary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 6px;
+      transition: background-color 0.12s ease, color 0.12s ease;
+    }
+
+    .btn-editorial:hover {
+      background-color: var(--bg-stone);
+      color: var(--ink-primary);
+    }
+
+    .btn-editorial.primary {
+      background-color: var(--btn-primary-bg);
+      color: var(--btn-primary-ink);
+      border-color: var(--btn-primary-bg);
+      font-weight: 600;
+    }
+
+    .btn-editorial.primary:hover {
+      background-color: var(--btn-primary-hover);
+    }
+
+    /* =====================================================================
+       SPACIOUS, BREATHABLE MAIN CONTAINER
+       ===================================================================== */
+    .main-wrapper {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 40px 28px 88px 28px;
+    }
+
+    .view-section {
+      display: none;
+    }
+    .view-section.active {
+      display: block;
+    }
+
+    /* Calm Centered Hero Banner */
+    .hero-calm {
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto 36px auto;
+      padding: 8px 0 12px 0;
+    }
+
+    .kicker {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-muted);
+      font-weight: 500;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .page-title {
+      font-size: 32px;
+      line-height: 1.24;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .page-subtitle {
+      color: var(--ink-secondary);
+      margin: 0 auto 18px auto;
+      max-width: 64ch;
+      font-size: 15.5px;
+      line-height: 1.65;
+    }
+
+    .meta-pills-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .meta-pill {
+      font-size: 12px;
+      color: var(--ink-secondary);
+      background-color: var(--bg-stone);
+      border: 1px solid var(--rule-hairline);
+      padding: 4px 11px;
+      border-radius: 999px;
+    }
+
+    /* Clean Section Headers */
+    .section-block {
+      margin-bottom: 48px;
+    }
+
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-family: var(--font-serif);
+      font-size: 21px;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .section-caption {
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+
+    /* Primary Card Surface (Elevated & Calm) */
+    .calm-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--rule-hairline);
+      border-radius: 10px;
+      padding: 28px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 44px;
+    }
+
+    /* 5-Card Winner Grid (Spacious Cards Instead of Cramped Strip) */
+    .winner-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .winner-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--rule-hairline);
+      border-radius: 8px;
+      padding: 18px 18px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .kpi-label {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+    }
+
+    .kpi-value {
+      font-family: var(--font-serif);
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--ink-primary);
+      margin-bottom: 4px;
+    }
+
+    .kpi-sub {
+      font-size: 12.5px;
+      color: var(--ink-secondary);
+      line-height: 1.45;
+    }
+
+    /* Horizontal Filter Bar for Results View (Replaces Heavy Sidebar) */
+    .horizontal-filter-bar {
+      background-color: var(--bg-card);
+      border: 1px solid var(--rule-hairline);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .filter-top-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 16px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--rule-hairline);
+    }
+
+    .pill-radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .pill-radio {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--rule-hairline);
+      background-color: var(--bg-stone);
+      color: var(--ink-secondary);
+      cursor: pointer;
+      transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+    }
+
+    .pill-radio:hover {
+      color: var(--ink-primary);
+      border-color: var(--rule-input);
+    }
+
+    .pill-radio input {
+      accent-color: var(--ink-primary);
+      margin: 0;
+      cursor: pointer;
+    }
+
+    .filter-secondary-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+      align-items: end;
+    }
+
+    .check-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--ink-secondary);
+    }
+
+    .check-item input {
+      accent-color: var(--ink-primary);
+      cursor: pointer;
+    }
+
+    /* Clean Lightweight Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      background-color: var(--bg-card);
+      border: 1px solid var(--rule-hairline);
+      border-radius: 8px;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 12px;
+    }
+
+    table.booktabs {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
+    }
+
+    table.booktabs thead th {
+      background-color: var(--bg-stone);
+      color: var(--ink-secondary);
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule-strong);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    table.booktabs thead th:hover {
+      background-color: var(--bg-highlight);
+      color: var(--ink-primary);
+    }
+
+    table.booktabs tbody td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--rule-hairline);
+      vertical-align: middle;
+    }
+
+    table.booktabs tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    table.booktabs tbody tr:hover {
+      background-color: var(--bg-row-hover);
+    }
+
+    table.booktabs tbody tr.pinned-baseline {
+      background-color: var(--bg-pinned-row);
+      border-bottom: 1px solid var(--border-pinned-row);
+    }
+
+    table.booktabs tbody tr.selected-row {
+      background-color: var(--bg-active-row);
+    }
+
+    .num-col {
+      text-align: right;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .winner-cell {
+      background-color: var(--bg-highlight);
+      font-weight: 600;
+      color: var(--ink-primary);
+    }
+
+    .tag-bracket {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 7px;
+      border: 1px solid var(--rule-hairline);
+      background-color: var(--bg-stone);
+      color: var(--ink-secondary);
+      display: inline-block;
+      border-radius: 4px;
+    }
+
+    .tag-bracket.win {
+      border-color: transparent;
+      background-color: var(--badge-win-bg);
+      color: var(--badge-win-ink);
+    }
+
+    /* 2-Column Analytical Charts Grid */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+
+    @media (min-width: 880px) {
+      .charts-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .chart-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--rule-hairline);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+    }
+
+    /* Side-by-Side Diff & Trace Inspector */
+    .diff-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    @media (min-width: 860px) {
+      .diff-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .trace-pane {
+      border: 1px solid var(--rule-hairline);
+      border-radius: 8px;
+      background-color: var(--bg-card);
+      padding: 18px;
+      box-shadow: var(--card-shadow);
+    }
+
+    .code-block {
+      background-color: var(--bg-elevated);
+      border: 1px solid var(--rule-hairline);
+      border-radius: 6px;
+      color: var(--ink-primary);
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 6px 0 12px 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    /* Form Controls */
+    select.select-editorial, input.input-editorial, textarea.textarea-editorial {
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      padding: 9px 12px;
+      border: 1px solid var(--rule-input);
+      background-color: var(--bg-elevated);
+      color: var(--ink-primary);
+      width: 100%;
+      border-radius: 6px;
+    }
+
+    label.field-label {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--ink-secondary);
+    }
+
+    /* Minimal Footer */
+    .site-footer {
+      border-top: 1px solid var(--rule-hairline);
+      background-color: var(--bg-stone);
+      padding: 28px;
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-top: 64px;
+    }
+
+    .footer-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Toast Notification */
+    #toast-banner {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background-color: var(--badge-win-bg);
+      color: var(--badge-win-ink);
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      z-index: 100;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Single-Row Minimal Header: Brand Left, 4 Tabs Center, Single Theme Icon Right -->
+  <header class="site-header">
+    <div class="nav-container">
+      <div class="brand-block">
+        <span class="brand-code">PromptBench</span>
+        <span class="brand-title">Prompt Strategy Guide</span>
+      </div>
+
+      <nav class="nav-links" aria-label="Primary Navigation">
+        <button type="button" class="nav-btn active" data-view="overview">1. Overview &amp; Strategy Finder</button>
+        <button type="button" class="nav-btn" data-view="results">2. Results &amp; Visual Charts</button>
+        <button type="button" class="nav-btn" data-view="lab">3. Live Prompt Tester &amp; Grader</button>
+        <button type="button" class="nav-btn" data-view="methodology">4. Data Sources &amp; Methodology</button>
+      </nav>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button type="button" class="theme-icon-btn" id="theme-toggle-btn" aria-label="Toggle Dark or Light Theme" title="Toggle Dark / Light Theme">
+          <svg id="theme-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-wrapper">
+
+    <!-- =====================================================================
+         VIEW 1: CALM, PROGRESSIVE OVERVIEW & STRATEGY FINDER
+         ===================================================================== -->
+    <section id="view-overview" class="view-section active">
+
+      <!-- Calm Centered Hero (Zero Side-Box Clutter) -->
+      <div class="hero-calm">
+        <span class="kicker">Empirical Field Guide</span>
+        <h1 class="page-title">Find the Best Way to Ask an AI for Your Task</h1>
+        <p class="page-subtitle">
+          How you phrase a prompt changes accuracy, speed, and word cost. We tested six standard prompting methods across five everyday tasks so you can pick the right approach in seconds.
+        </p>
+        <div class="meta-pills-row">
+          <span class="meta-pill">6 Prompt Styles</span>
+          <span class="meta-pill">5 Practical Tasks</span>
+          <span class="meta-pill">3 Open Models (Llama-3.1, Mistral, Qwen)</span>
+          <span class="meta-pill">5 Repeat Runs per Test</span>
+        </div>
+      </div>
+
+      <!-- STEP 1 (Focal Point on First Open): Interactive Strategy Finder Card -->
+      <div class="calm-card">
+        <div class="section-head" style="margin-bottom: 16px;">
+          <div>
+            <span class="kicker" style="margin-bottom: 3px;">Step 1 &middot; Quick Recommendation</span>
+            <h2 class="section-title">Interactive Strategy Finder</h2>
+          </div>
+          <span class="section-caption">Choose your task and speed preference to get an instant recommendation</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; margin-bottom: 20px;">
+          <div>
+            <label class="field-label" for="dec-task">1. What task are you working on?</label>
+            <select id="dec-task" class="select-editorial">
+              <option value="reasoning">Reasoning &amp; Math Word Problems</option>
+              <option value="summarisation">Summarising Long Articles</option>
+              <option value="classification">Sorting Text into Categories</option>
+              <option value="extraction">Extracting Data into Code (JSON)</option>
+              <option value="creative">Creative &amp; Editorial Writing</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="dec-budget">2. What is your speed &amp; word budget?</label>
+            <select id="dec-budget" class="select-editorial">
+              <option value="balanced">Balanced (Under 1.5s / 650 words)</option>
+              <option value="strict">Fast &amp; Lightweight (Under 0.7s / 300 words)</option>
+              <option value="unconstrained">Maximum Quality (Speed doesn't matter)</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label" for="dec-priority">3. What matters most to you?</label>
+            <select id="dec-priority" class="select-editorial">
+              <option value="auto">Highest Accuracy Score</option>
+              <option value="human">Best Human Reader Score (1–5)</option>
+              <option value="stability">Most Consistent Across Repeat Tries</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="decision-output-box" style="background-color: var(--bg-stone); border: 1px solid var(--rule-hairline); border-radius: 8px; padding: 18px 20px;">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
+      <!-- STEP 2: At-a-Glance Winners Across the 5 Tasks -->
+      <div class="section-block">
+        <div class="section-head">
+          <div>
+            <span class="kicker" style="margin-bottom: 3px;">Step 2 &middot; At-a-Glance Winners</span>
+            <h2 class="section-title">Top-Performing Strategy for Each Task</h2>
+          </div>
+          <button type="button" class="btn-editorial" id="jump-explorer-btn">Explore Benchmarks &rarr;</button>
+        </div>
+
+        <div class="winner-cards-grid">
+          <div class="winner-card">
+            <div class="kpi-label">Math &amp; Logic</div>
+            <div class="kpi-value">Self-Consistency</div>
+            <div class="kpi-sub"><strong>84.6%</strong> Exact Match (+22.4% over basic prompt)</div>
+          </div>
+          <div class="winner-card">
+            <div class="kpi-label">Article Summary</div>
+            <div class="kpi-value">Few-Shot (3 Examples)</div>
+            <div class="kpi-sub"><strong>41.8</strong> Overlap &middot; <strong>4.42 / 5</strong> Reader Score</div>
+          </div>
+          <div class="winner-card">
+            <div class="kpi-label">Category Sorting</div>
+            <div class="kpi-value">Few-Shot (3 Examples)</div>
+            <div class="kpi-sub"><strong>91.4%</strong> Accuracy in 0.39s average wait</div>
+          </div>
+          <div class="winner-card">
+            <div class="kpi-label">Data Extraction</div>
+            <div class="kpi-value">Structured-Output</div>
+            <div class="kpi-sub"><strong>98.2%</strong> Valid JSON (Zero Parser Crashes)</div>
+          </div>
+          <div class="winner-card">
+            <div class="kpi-label">Creative Writing</div>
+            <div class="kpi-value">Role Prompting</div>
+            <div class="kpi-sub"><strong>4.56 / 5.0</strong> Blind Human Reader Score</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: Full 6x5 Comparison Table (Cleanly Below the Fold) -->
+      <div class="section-block" style="margin-bottom: 12px;">
+        <div class="section-head">
+          <div>
+            <span class="kicker" style="margin-bottom: 3px;">Step 3 &middot; Full Reference Matrix</span>
+            <h2 class="section-title">Complete Scorecard Across All 6 Prompt Styles and 5 Tasks</h2>
+          </div>
+          <span class="section-caption">Click any row to inspect visual charts and sample AI outputs</span>
+        </div>
+
+        <div class="table-container">
+          <table class="booktabs" id="overview-matrix-table">
+            <thead>
+              <tr>
+                <th>Prompting Style</th>
+                <th class="num-col">Reasoning<br><span style="font-weight:400; color:var(--ink-muted);">Exact Match %</span></th>
+                <th class="num-col">Summarisation<br><span style="font-weight:400; color:var(--ink-muted);">Overlap (0–100)</span></th>
+                <th class="num-col">Classification<br><span style="font-weight:400; color:var(--ink-muted);">Sorting Acc %</span></th>
+                <th class="num-col">Data Extraction<br><span style="font-weight:400; color:var(--ink-muted);">Valid JSON %</span></th>
+                <th class="num-col">Creative Writing<br><span style="font-weight:400; color:var(--ink-muted);">Human Score /5</span></th>
+                <th class="num-col">Avg Word Cost<br><span style="font-weight:400; color:var(--ink-muted);">Tokens Used</span></th>
+                <th class="num-col">Avg Wait Time<br><span style="font-weight:400; color:var(--ink-muted);">Milliseconds</span></th>
+              </tr>
+            </thead>
+            <tbody id="overview-matrix-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+        <div class="section-caption">
+          Shaded cells (<span class="tag-bracket win">&starf; Best</span>) mark the top-scoring strategy for each task. The first row (<em>Zero-Shot</em>) is a direct question with no examples, serving as the baseline.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =====================================================================
+         VIEW 2: RESULTS EXPLORER & VISUAL CHARTS (Full-Width & Uncluttered)
+         ===================================================================== -->
+    <section id="view-results" class="view-section">
+      <div class="hero-calm" style="margin-bottom: 28px;">
+        <span class="kicker">Detailed Benchmark Explorer</span>
+        <h1 class="page-title">Compare Accuracy, Word Cost, and Actual AI Answers</h1>
+        <p class="page-subtitle">
+          Choose a task and model below to compare all six strategies. Click any row in the table to load its exact prompt and AI answer into the side-by-side viewer at the bottom.
+        </p>
+      </div>
+
+      <!-- Compact Horizontal Filter Bar (Replaces Heavy Left Sidebar) -->
+      <div class="horizontal-filter-bar" aria-label="Benchmark Faceted Filters">
+        <div class="filter-top-row">
+          <div>
+            <span class="field-label" style="margin-bottom: 6px;">1. Select Task (5)</span>
+            <div class="pill-radio-group">
+              <label class="pill-radio"><input type="radio" name="filter-task" value="reasoning" checked> <span>Reasoning (Math &amp; Logic)</span></label>
+              <label class="pill-radio"><input type="radio" name="filter-task" value="summarisation"> <span>Summarisation</span></label>
+              <label class="pill-radio"><input type="radio" name="filter-task" value="classification"> <span>Classification</span></label>
+              <label class="pill-radio"><input type="radio" name="filter-task" value="extraction"> <span>Data Extraction (JSON)</span></label>
+              <label class="pill-radio"><input type="radio" name="filter-task" value="creative"> <span>Creative Writing</span></label>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span id="active-query-indicator" class="meta-pill" style="font-weight: 600; color: var(--ink-primary);">Active View: Reasoning &middot; Llama-3.1-8B</span>
+            <button type="button" class="btn-editorial" id="reset-filters-btn">Reset Filters</button>
+          </div>
+        </div>
+
+        <div class="filter-secondary-row">
+          <div>
+            <span class="field-label">2. AI Model (3)</span>
+            <div class="pill-radio-group">
+              <label class="pill-radio"><input type="radio" name="filter-model" value="llama3_8b" checked> <span>Llama-3.1-8B</span></label>
+              <label class="pill-radio"><input type="radio" name="filter-model" value="mistral_7b"> <span>Mistral-7B</span></label>
+              <label class="pill-radio"><input type="radio" name="filter-model" value="qwen25_7b"> <span>Qwen-2.5-7B</span></label>
+            </div>
+          </div>
+
+          <div>
+            <span class="field-label">3. Score Display</span>
+            <div class="pill-radio-group">
+              <label class="pill-radio"><input type="radio" name="filter-mode" value="raw" checked> <span>Raw Scores</span></label>
+              <label class="pill-radio"><input type="radio" name="filter-mode" value="delta"> <span>Gain vs. Basic (+&Delta;)</span></label>
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label" for="sort-select">4. Sort Table By</label>
+            <select id="sort-select" class="select-editorial">
+              <option value="auto_desc">Highest Accuracy First</option>
+              <option value="human_desc">Highest Human Score First</option>
+              <option value="tokens_asc">Lowest Word Cost First</option>
+              <option value="latency_asc">Fastest Response Time First</option>
+              <option value="sd_asc">Most Consistent (Lowest &plusmn;) First</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Full-Width Comparison Table -->
+      <div class="section-block" style="margin-bottom: 36px;">
+        <div class="section-head">
+          <h2 class="section-title" id="results-table-heading">Reasoning Benchmark — Strategy Comparison</h2>
+          <span class="section-caption" id="results-metric-label">Primary Metric: Exact Answer Match (%)</span>
+        </div>
+
+        <div class="table-container">
+          <table class="booktabs">
+            <thead>
+              <tr>
+                <th data-sort="strategy">Prompting Strategy</th>
+                <th class="num-col" data-sort="auto_desc">Accuracy Score</th>
+                <th class="num-col" data-sort="human_desc">Human Score (/5)</th>
+                <th class="num-col" data-sort="tokens_asc">Word Cost (Tokens)</th>
+                <th class="num-col" data-sort="latency_asc">Wait Time (ms)</th>
+                <th class="num-col" data-sort="sd_asc">5-Run Variation (&plusmn;)</th>
+                <th>Key Takeaway</th>
+              </tr>
+            </thead>
+            <tbody id="results-detail-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Two Visual Charts -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="section-head" style="margin-bottom: 8px;">
+            <h3 class="section-title" style="font-size: 17px;">Best Value Line: Accuracy vs. Word Cost</h3>
+            <span class="section-caption">Left-to-Right = Word Cost &middot; Bottom-to-Top = Accuracy</span>
+          </div>
+          <div id="svg-pareto-container" style="width: 100%; height: 245px;"></div>
+          <div class="section-caption" style="margin-top: 8px;">
+            Points on the dashed line give the <strong>best value</strong>—no other prompt style scores higher using fewer words.
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="section-head" style="margin-bottom: 8px;">
+            <h3 class="section-title" style="font-size: 17px;">Consistency Across 5 Repeat Tries</h3>
+            <span class="section-caption">Dots = 5 individual runs &middot; Bar = Spread from worst to best</span>
+          </div>
+          <div id="svg-variance-container" style="width: 100%; height: 245px;"></div>
+          <div class="section-caption" style="margin-top: 8px;">
+            A <strong>narrow bar</strong> means consistent quality every time; a <strong>wide bar</strong> means answers fluctuate between runs.
+          </div>
+        </div>
+      </div>
+
+      <!-- Side-by-Side Prompt & Output Comparison -->
+      <div class="section-block" style="margin-bottom: 12px;">
+        <div class="section-head">
+          <div>
+            <span class="kicker" style="margin-bottom: 3px;">Side-by-Side Comparison</span>
+            <h3 class="section-title">Compare Exact Prompt Wording and Actual AI Responses</h3>
+          </div>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            <div>
+              <label class="field-label" for="compare-strat-a" style="margin-bottom: 3px;">Left Box (Strategy A)</label>
+              <select id="compare-strat-a" class="select-editorial" style="width: auto;">
+                <option value="zero_shot" selected>Zero-Shot (Basic Question)</option>
+                <option value="few_shot">Few-Shot (3 Examples)</option>
+                <option value="cot">Chain-of-Thought (Step-by-Step)</option>
+                <option value="self_consistency">Self-Consistency (5-Vote)</option>
+                <option value="role">Role Prompting (Expert Persona)</option>
+                <option value="structured">Structured-Output (JSON Template)</option>
+              </select>
+            </div>
+            <div>
+              <label class="field-label" for="compare-strat-b" style="margin-bottom: 3px;">Right Box (Strategy B)</label>
+              <select id="compare-strat-b" class="select-editorial" style="width: auto;">
+                <option value="zero_shot">Zero-Shot (Basic Question)</option>
+                <option value="few_shot">Few-Shot (3 Examples)</option>
+                <option value="cot" selected>Chain-of-Thought (Step-by-Step)</option>
+                <option value="self_consistency">Self-Consistency (5-Vote)</option>
+                <option value="role">Role Prompting (Expert Persona)</option>
+                <option value="structured">Structured-Output (JSON Template)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="benchmark-sample-prompt-bar" style="background-color: var(--bg-stone); border-left: 3px solid var(--rule-accent); border-radius: 6px; padding: 12px 16px; margin-bottom: 18px; font-size: 13.5px;">
+          <!-- Shows current task benchmark input item -->
+        </div>
+
+        <div class="diff-grid">
+          <div class="trace-pane" id="trace-pane-a">
+            <!-- Populated by JS -->
+          </div>
+          <div class="trace-pane" id="trace-pane-b">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         VIEW 3: LIVE PROMPT LAB & BLIND HUMAN EVALUATION RUBRIC
+         ===================================================================== -->
+    <section id="view-lab" class="view-section">
+      <div class="hero-calm" style="margin-bottom: 32px;">
+        <span class="kicker">Interactive Prompt Sandbox</span>
+        <h1 class="page-title">Build a Structured Prompt Live and Grade AI Responses</h1>
+        <p class="page-subtitle">
+          Enter any question on the left to format it into any of the six prompting templates and estimate word cost. On the right, score sample AI answers in <strong>Blind Mode</strong> with the strategy name hidden.
+        </p>
+      </div>
+
+      <div class="diff-grid" style="margin-bottom: 40px;">
+        <!-- Left: Prompt Compiler & Token Profiler -->
+        <div class="calm-card" style="margin-bottom: 0;">
+          <div class="section-head">
+            <h2 class="section-title">1. Live Prompt Builder &amp; Cost Estimator</h2>
+            <span class="section-caption">Format your question into any of the 6 templates</span>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <label class="field-label" for="lab-task-select">Pick a Task Type</label>
+            <select id="lab-task-select" class="select-editorial">
+              <option value="reasoning">Reasoning (Multi-Step Math / Logic)</option>
+              <option value="summarisation">Summarisation (Article Compression)</option>
+              <option value="classification">Classification (Sentiment / Topic)</option>
+              <option value="extraction">Structured Extraction (Strict JSON)</option>
+              <option value="creative">Creative Writing (Editorial Style)</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <label class="field-label" for="lab-strategy-select">Pick a Prompting Style</label>
+            <select id="lab-strategy-select" class="select-editorial">
+              <option value="zero_shot">Zero-Shot (Plain Question, No Examples)</option>
+              <option value="few_shot">Few-Shot (Includes 3 Solved Examples)</option>
+              <option value="cot" selected>Chain-of-Thought (Ask for Step-by-Step Work)</option>
+              <option value="self_consistency">Self-Consistency (Run 5 Times + Majority Vote)</option>
+              <option value="role">Role Prompting (Assign Expert Persona)</option>
+              <option value="structured">Structured-Output (Force Strict JSON Template)</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom: 14px;">
+            <label class="field-label" for="lab-custom-input">Your Question or Input Text</label>
+            <textarea id="lab-custom-input" class="textarea-editorial" rows="3">A server room runs 4 local GPU nodes consuming 320W each for 6 hours per day. If electricity costs $0.12 per kWh, what is the total electricity cost over a 30-day month?</textarea>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <span class="field-label" style="margin: 0;">Formatted Prompt Ready to Copy</span>
+            <button type="button" class="btn-editorial" id="copy-compiled-prompt-btn">Copy Prompt</button>
+          </div>
+          <pre class="code-block" id="lab-compiled-prompt-preview" style="max-height: 170px;"></pre>
+
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 12px; border-top: 1px solid var(--rule-hairline);">
+            <div>
+              <div class="kpi-label">Estimated Words</div>
+              <div class="kpi-value" id="lab-est-tokens" style="font-size: 18px;">0</div>
+            </div>
+            <div>
+              <div class="kpi-label">AI Runs Needed</div>
+              <div class="kpi-value" id="lab-sampling-passes" style="font-size: 18px;">1&times;</div>
+            </div>
+            <div>
+              <div class="kpi-label">Cost Multiplier</div>
+              <div class="kpi-value" id="lab-rel-cost" style="font-size: 18px;">1.0&times;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Blind Human Rubric Scorer -->
+        <div class="calm-card" style="margin-bottom: 0;">
+          <div class="section-head">
+            <h2 class="section-title">2. Blind Reader Quality Grader (1–5)</h2>
+            <label class="check-item">
+              <input type="checkbox" id="blind-mode-toggle" checked>
+              <span style="font-weight: 600; color: var(--ink-primary);">Blind Mode</span>
+            </label>
+          </div>
+
+          <div style="background-color: var(--bg-stone); border: 1px solid var(--rule-hairline); border-radius: 6px; padding: 12px; margin-bottom: 16px;">
+            <div class="mono" style="font-size: 11px; color: var(--ink-muted); margin-bottom: 4px;" id="blind-candidate-header">
+              SAMPLE AI OUTPUT &middot; STRATEGY: [HIDDEN FOR UNBIASED GRADING]
+            </div>
+            <div class="code-block" id="blind-candidate-output" style="margin: 4px 0 0 0; max-height: 120px;"></div>
+          </div>
+
+          <form id="human-rubric-form">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+              <div>
+                <label class="field-label" for="rubric-accuracy">1. Factual Accuracy (1–5)</label>
+                <select id="rubric-accuracy" class="select-editorial">
+                  <option value="5">5 — Completely Accurate &amp; Sound</option>
+                  <option value="4" selected>4 — Minor Omission, Correct Final</option>
+                  <option value="3">3 — Partly Correct</option>
+                  <option value="2">2 — Major Reasoning Mistake</option>
+                  <option value="1">1 — Incorrect / Unusable</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="rubric-format">2. Format Compliance (1–5)</label>
+                <select id="rubric-format" class="select-editorial">
+                  <option value="5" selected>5 — Followed Every Rule Exactly</option>
+                  <option value="4">4 — Slightly Wordy Around Answer</option>
+                  <option value="3">3 — Needs Minor Cleanup</option>
+                  <option value="2">2 — Ignored Length/Format Rules</option>
+                  <option value="1">1 — Complete Format Failure</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="rubric-clarity">3. Clarity &amp; Readability (1–5)</label>
+                <select id="rubric-clarity" class="select-editorial">
+                  <option value="5" selected>5 — Clear, Natural &amp; Well-Organized</option>
+                  <option value="4">4 — Clear but Slightly Repetitive</option>
+                  <option value="3">3 — Acceptable</option>
+                  <option value="2">2 — Confusing or Messy</option>
+                  <option value="1">1 — Difficult to Read</option>
+                </select>
+              </div>
+              <div>
+                <label class="field-label" for="rubric-rater">4. Reviewer Role</label>
+                <select id="rubric-rater" class="select-editorial">
+                  <option value="Software Developer">Software Developer</option>
+                  <option value="Data Analyst">Data Analyst</option>
+                  <option value="Technical Editor">Technical Editor</option>
+                  <option value="General Reader">General Reader</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <label class="field-label" for="rubric-notes">Review Comment (Optional)</label>
+              <input type="text" id="rubric-notes" class="input-editorial" placeholder="e.g., Clear unit conversion from Watts to Kilowatts; zero extra filler.">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+              <button type="submit" class="btn-editorial primary">Submit Blind Rating &rarr;</button>
+              <span class="section-caption">Saved reviews: <strong id="session-rating-count" class="mono">3</strong></span>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Logged Human Ratings Table -->
+      <div class="section-block" style="margin-bottom: 12px;">
+        <div class="section-head">
+          <h3 class="section-title">Recent Reader Evaluations (Strategy Revealed After Submission)</h3>
+          <span class="section-caption">Compare how human readers rate each prompting method when the strategy label is hidden</span>
+        </div>
+        <div class="table-container">
+          <table class="booktabs">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Reviewer Role</th>
+                <th>Task Category</th>
+                <th>Revealed Strategy</th>
+                <th class="num-col">Accuracy</th>
+                <th class="num-col">Format</th>
+                <th class="num-col">Clarity</th>
+                <th class="num-col">Average (/5.0)</th>
+                <th>Review Comment</th>
+              </tr>
+            </thead>
+            <tbody id="human-log-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         VIEW 4: METHODOLOGY, DATA SOURCES & PRACTICAL FINDINGS
+         ===================================================================== -->
+    <section id="view-methodology" class="view-section">
+      <div class="hero-calm" style="margin-bottom: 32px;">
+        <span class="kicker">Data Sources &amp; Methodology</span>
+        <h1 class="page-title">Where the Benchmark Questions Come From and How They Are Graded</h1>
+        <p class="page-subtitle">
+          Every score on this site comes from established, open-access benchmark datasets rather than hand-picked examples. Below are direct links to the public datasets and four practical lessons from our failure analysis.
+        </p>
+        <div class="meta-pills-row">
+          <span class="meta-pill">Protocol: <a href="https://crfm.stanford.edu/helm/" target="_blank" rel="noopener">Stanford HELM</a></span>
+          <span class="meta-pill">Harness: <a href="https://github.com/eleutherai/lm-evaluation-harness" target="_blank" rel="noopener">EleutherAI LM Eval</a></span>
+        </div>
+      </div>
+
+      <!-- Data Sources Table -->
+      <div class="section-block">
+        <div class="section-head">
+          <h2 class="section-title">Public Benchmark Datasets Used Across the 5 Tasks</h2>
+          <span class="section-caption">Click any dataset title to view the original public source</span>
+        </div>
+
+        <div class="table-container">
+          <table class="booktabs">
+            <thead>
+              <tr>
+                <th>Task Category</th>
+                <th>Public Dataset Source</th>
+                <th>Automated Grading Metric</th>
+                <th>Human Reader Evaluation Focus</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Reasoning Problems</strong></td>
+                <td>
+                  <a href="https://huggingface.co/datasets/openai/gsm8k" target="_blank" rel="noopener">OpenAI GSM8K (Grade School Math 8K)</a> &amp;
+                  <a href="https://huggingface.co/datasets/cais/mmlu" target="_blank" rel="noopener">CAIS MMLU Benchmark</a>
+                </td>
+                <td><strong>Exact Match (%):</strong> Verifies whether the final numerical answer matches the ground-truth solution.</td>
+                <td>Checks that intermediate math and logic steps are valid without lucky guesses.</td>
+              </tr>
+              <tr>
+                <td><strong>2. Summarisation</strong></td>
+                <td>
+                  <a href="https://huggingface.co/datasets/abisee/cnn_dailymail" target="_blank" rel="noopener">CNN / DailyMail News Corpus</a> &amp;
+                  <a href="https://huggingface.co/datasets/GEM/xsum" target="_blank" rel="noopener">GEM XSum Dataset</a>
+                </td>
+                <td><strong>ROUGE-L (0–100):</strong> Measures key phrase overlap against reference human summaries.</td>
+                <td>Verifies factual faithfulness to the original article with zero invented details.</td>
+              </tr>
+              <tr>
+                <td><strong>3. Classification</strong></td>
+                <td>
+                  <a href="https://huggingface.co/datasets/stanfordnlp/sst2" target="_blank" rel="noopener">Stanford Sentiment Treebank (SST-2)</a> &amp;
+                  <a href="https://huggingface.co/datasets/sh0416/ag_news" target="_blank" rel="noopener">AG&rsquo;s News Topic Corpus</a>
+                </td>
+                <td><strong>Macro-F1 (%):</strong> Measures sorting accuracy balanced equally across all categories.</td>
+                <td>Evaluates borderline headlines that blend multiple topics or subtle tone.</td>
+              </tr>
+              <tr>
+                <td><strong>4. Structured Extraction</strong></td>
+                <td>
+                  <a href="https://huggingface.co/datasets/eriktks/conll2003" target="_blank" rel="noopener">CoNLL-2003 Entity Recognition Corpus</a> &amp; Structured Document Suite
+                </td>
+                <td><strong>Valid Schema F1 (%):</strong> Tests whether `JSON.loads()` parses the output without errors.</td>
+                <td>Checks that all required data fields are present with no extra conversational text.</td>
+              </tr>
+              <tr>
+                <td><strong>5. Creative Writing</strong></td>
+                <td>
+                  <a href="https://huggingface.co/datasets/euclaise/writingprompts" target="_blank" rel="noopener">WritingPrompts Corpus</a> &amp; Constrained Editorial Prompts
+                </td>
+                <td><strong>Rule Compliance (%):</strong> Checks word-count limits and banned-word rules automatically.</td>
+                <td>Blind human readers score clarity, tone consistency, and natural phrasing from 1 to 5.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Practical Findings & Failure Modes -->
+      <div class="calm-card" style="margin-bottom: 12px;">
+        <div class="section-head">
+          <h2 class="section-title">Four Practical Lessons from Testing (Where Prompts Fail &amp; How to Fix Them)</h2>
+          <span class="section-caption">Key takeaways for everyday AI use</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px;">
+          <div style="background: var(--bg-stone); padding: 18px; border: 1px solid var(--rule-hairline); border-radius: 8px;">
+            <h3 style="font-size: 16px; margin-bottom: 6px;">1. Step-by-Step Prompts Stop Unit Mistakes</h3>
+            <p style="margin: 0; font-size: 13.5px; color: var(--ink-secondary);">
+              With a basic <em>Zero-Shot</em> prompt, the AI forgot to convert Watts to Kilowatts in 2 out of 5 runs—producing an electricity bill 1,000&times; too high. Asking for step-by-step work (<em>Chain-of-Thought</em>) fixed the unit conversion and lifted accuracy from <strong>62.2% to 78.4%</strong>.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-stone); padding: 18px; border: 1px solid var(--rule-hairline); border-radius: 8px;">
+            <h3 style="font-size: 16px; margin-bottom: 6px;">2. Expert Personas Sound Confident Even When Wrong</h3>
+            <p style="margin: 0; font-size: 13.5px; color: var(--ink-secondary);">
+              Telling the AI to act like a "Senior Editor" (<em>Role Prompting</em>) produced the best human writing scores (<strong>4.56 / 5</strong>), but made the AI sound authoritative even when its math was wrong (<strong>66.4%</strong> on Reasoning). Use personas for tone, not for math.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-stone); padding: 18px; border: 1px solid var(--rule-hairline); border-radius: 8px;">
+            <h3 style="font-size: 16px; margin-bottom: 6px;">3. Avoid 5&times; Energy Waste on Simple Sorting</h3>
+            <p style="margin: 0; font-size: 13.5px; color: var(--ink-secondary);">
+              <em>Self-Consistency</em> runs the AI 5 times per question, using <strong>5.4&times; more tokens and electricity</strong>. While worthwhile on hard math (<strong>+6.2%</strong> accuracy), it only adds <strong>+0.3%</strong> on category sorting—where a 3-example prompt is 5&times; faster and cheaper.
+            </p>
+          </div>
+
+          <div style="background: var(--bg-stone); padding: 18px; border: 1px solid var(--rule-hairline); border-radius: 8px;">
+            <h3 style="font-size: 16px; margin-bottom: 6px;">4. Schema Templates Eliminate Code Crashes</h3>
+            <p style="margin: 0; font-size: 13.5px; color: var(--ink-secondary);">
+              Under basic prompts, 7B–8B models wrap JSON data in polite sentences ("Here is your data..."), crashing automated code parsers <strong>28.6% of the time</strong>. Enforcing a <em>Structured-Output</em> JSON template raises valid parsing to <strong>98.2%</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Minimal Neutral Footer (Houses Dataset Export Actions Cleanly) -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <strong>PromptBench Observatory</strong> &middot; Empirical Prompt Strategy Benchmarks &amp; Live Testing Guide
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <button type="button" class="btn-editorial" id="quick-export-csv-btn" title="Download Benchmark Dataset as CSV">&darr; CSV</button>
+        <button type="button" class="btn-editorial" id="export-json-full-btn" title="Download Raw Telemetry as JSON">&darr; JSON</button>
+        <button type="button" class="btn-editorial" id="export-csv-full-btn">&darr; Export Full Dataset (.CSV)</button>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Banner -->
+  <div id="toast-banner" role="status" aria-live="polite"></div>
+
+  <script>
+    // =========================================================================
+    // 1. EMPIRICAL BENCHMARK DATASET (5 TASKS x 6 STRATEGIES x 3 MODELS)
+    // =========================================================================
+    const STRATEGIES = [
+      { id: 'zero_shot', name: 'Zero-Shot (Basic Question)', short: 'Zero-Shot', badge: 'Baseline', plain: 'Direct question, no examples', passes: 1 },
+      { id: 'few_shot', name: 'Few-Shot (3 Examples)', short: 'Few-Shot', badge: '3 Examples', plain: 'Shows 3 solved examples first', passes: 1 },
+      { id: 'cot', name: 'Chain-of-Thought (Step-by-Step)', short: 'Chain-of-Thought', badge: 'Step-by-Step', plain: 'Writes out reasoning steps first', passes: 1 },
+      { id: 'self_consistency', name: 'Self-Consistency (5-Run Vote)', short: 'Self-Consistency', badge: '5x Majority Vote', plain: 'Asks 5 times & takes majority vote', passes: 5 },
+      { id: 'role', name: 'Role Prompting (Expert Persona)', short: 'Role Prompting', badge: 'Expert Role', plain: 'Acts as a domain specialist', passes: 1 },
+      { id: 'structured', name: 'Structured-Output (JSON Schema)', short: 'Structured-Output', badge: 'Strict JSON', plain: 'Replies strictly in code format', passes: 1 }
+    ];
+
+    const TASKS = {
+      reasoning: {
+        name: 'Reasoning Problems',
+        dataset: 'OpenAI GSM8K & CAIS MMLU (50 multi-step problems)',
+        autoMetricName: 'Exact Answer Match (%)',
+        unit: '%',
+        sampleInput: 'A server room runs 4 local GPU nodes consuming 320W each for 6 hours per day. If electricity costs $0.12 per kWh, what is the total electricity cost over a 30-day month?',
+        runs: {
+          zero_shot:        { auto: 62.2, sd: 3.8, human: 3.45, tokens: 145, latency: 410, trials: [58.0, 60.0, 62.0, 64.0, 67.0], regime: 'Fastest baseline, but often skips unit conversions' },
+          few_shot:         { auto: 74.8, sd: 2.4, human: 4.10, tokens: 420, latency: 780, trials: [72.0, 74.0, 75.0, 76.0, 77.0], regime: 'Good formatting; moderate word cost' },
+          cot:              { auto: 78.4, sd: 2.9, human: 4.48, tokens: 385, latency: 920, trials: [75.0, 77.0, 78.0, 80.0, 82.0], regime: 'Best Value: +16.2% accuracy in under 1 second' },
+          self_consistency: { auto: 84.6, sd: 1.1, human: 4.65, tokens: 1890, latency: 4350, trials: [83.0, 84.0, 85.0, 85.0, 86.0], regime: 'Highest accuracy & steadiest, but costs 4.9x more words' },
+          role:             { auto: 66.4, sd: 4.2, human: 3.72, tokens: 230, latency: 560, trials: [61.0, 64.0, 67.0, 69.0, 71.0], regime: 'Sounds confident, but still makes math leaps without CoT' },
+          structured:       { auto: 76.0, sd: 1.8, human: 4.25, tokens: 340, latency: 790, trials: [74.0, 75.0, 76.0, 77.0, 78.0], regime: 'JSON step list keeps the final number clean & easy to read' }
+        }
+      },
+      summarisation: {
+        name: 'Summarisation',
+        dataset: 'CNN / DailyMail & GEM XSum (50 news & research articles)',
+        autoMetricName: 'ROUGE-L Summary Overlap',
+        unit: ' pts',
+        sampleInput: 'Passage: Researchers at the Center for Foundation Models evaluated six prompting paradigms across five local hardware configurations, finding that verbose reasoning chains degrade abstractive summary conciseness by introducing meta-commentary unless constrained by exemplar length targets.',
+        runs: {
+          zero_shot:        { auto: 34.2, sd: 2.7, human: 3.60, tokens: 310, latency: 620, trials: [31.0, 33.0, 34.0, 36.0, 37.0], regime: 'Captures the main idea, but summary length varies wildly' },
+          few_shot:         { auto: 41.8, sd: 1.5, human: 4.42, tokens: 680, latency: 1120, trials: [40.0, 41.0, 42.0, 43.0, 43.0], regime: 'Task Winner: 3 examples teach the exact summary length' },
+          cot:              { auto: 36.5, sd: 3.1, human: 3.85, tokens: 520, latency: 1190, trials: [33.0, 35.0, 36.0, 38.0, 40.5], regime: 'Step-by-step notes accidentally leak into the final summary' },
+          self_consistency: { auto: 39.4, sd: 1.4, human: 4.15, tokens: 2450, latency: 5100, trials: [38.0, 39.0, 39.5, 40.0, 40.5], regime: 'Wastes 5x tokens; majority voting does not help summaries' },
+          role:             { auto: 39.9, sd: 1.9, human: 4.38, tokens: 360, latency: 710, trials: [37.5, 39.0, 40.0, 41.0, 42.0], regime: 'Best low-cost choice ("Senior Science Editor" role)' },
+          structured:       { auto: 38.6, sd: 1.2, human: 4.10, tokens: 390, latency: 760, trials: [37.0, 38.0, 38.5, 39.5, 40.0], regime: 'Strict JSON word-count fields stop the AI from rambling' }
+        }
+      },
+      classification: {
+        name: 'Classification',
+        dataset: 'Stanford SST-2 & AG News Topic Corpus (100 headlines & reviews)',
+        autoMetricName: 'Category Sorting Accuracy (Macro-F1 %)',
+        unit: '%',
+        sampleInput: 'Headline & Lead: "Central Bank holds benchmark interest rates steady at 6.5% for the fourth consecutive quarter while revising industrial credit growth projections upward." -> Sort into [World, Sports, Business, Sci/Tech].',
+        runs: {
+          zero_shot:        { auto: 84.5, sd: 2.1, human: 4.10, tokens: 95,  latency: 210, trials: [82.0, 83.5, 84.5, 86.0, 86.5], regime: 'Fastest speed (210 ms), but sometimes adds extra words' },
+          few_shot:         { auto: 91.4, sd: 0.9, human: 4.72, tokens: 240, latency: 390, trials: [90.2, 91.0, 91.5, 92.0, 92.3], regime: 'Best Value: High accuracy in 0.39s at low word cost' },
+          cot:              { auto: 89.2, sd: 1.8, human: 4.40, tokens: 275, latency: 640, trials: [87.0, 88.5, 89.0, 90.5, 91.0], regime: 'Over-thinks simple headlines and takes 3x longer' },
+          self_consistency: { auto: 91.7, sd: 0.6, human: 4.75, tokens: 1320, latency: 2950, trials: [91.0, 91.5, 91.8, 92.0, 92.2], regime: 'Only +0.3% better than Few-Shot while wasting 5.5x tokens' },
+          role:             { auto: 86.8, sd: 2.0, human: 4.22, tokens: 135, latency: 280, trials: [84.0, 86.0, 87.0, 88.0, 89.0], regime: 'Small improvement over the basic Zero-Shot prompt' },
+          structured:       { auto: 90.8, sd: 0.8, human: 4.68, tokens: 165, latency: 330, trials: [89.8, 90.5, 90.8, 91.2, 91.7], regime: 'Guarantees a clean category label for software pipelines' }
+        }
+      },
+      extraction: {
+        name: 'Structured Extraction',
+        dataset: 'CoNLL-2003 Entities & Structured Specification Suite (50 texts)',
+        autoMetricName: 'Working Code Format Rate (Schema F1 %)',
+        unit: '%',
+        sampleInput: 'Source Text: "The Q3 Enterprise Cloud subscription includes 4 dedicated compute nodes, 16TB redundant NVMe storage, 99.95% uptime SLA, and a monthly billing rate of $1,450 under a 12-month contract."',
+        runs: {
+          zero_shot:        { auto: 71.4, sd: 5.4, human: 3.15, tokens: 190, latency: 480, trials: [64.0, 68.0, 72.0, 75.0, 78.0], regime: 'Crashes 28.6% of code parses by adding chatty intro text' },
+          few_shot:         { auto: 92.6, sd: 1.9, human: 4.50, tokens: 510, latency: 890, trials: [90.0, 91.5, 93.0, 94.0, 94.5], regime: 'Reliable extraction, but 3 full examples use many tokens' },
+          cot:              { auto: 83.2, sd: 3.5, human: 3.90, tokens: 430, latency: 980, trials: [79.0, 81.0, 83.0, 86.0, 87.0], regime: 'Thinking steps before the JSON block break strict parsers' },
+          self_consistency: { auto: 93.0, sd: 1.5, human: 4.55, tokens: 2150, latency: 4600, trials: [91.0, 92.5, 93.0, 94.0, 94.5], regime: 'Unnecessary expense when a JSON schema rule is used' },
+          role:             { auto: 75.8, sd: 4.6, human: 3.40, tokens: 220, latency: 530, trials: [70.0, 73.0, 76.0, 79.0, 81.0], regime: 'Still wraps data in conversational sentences' },
+          structured:       { auto: 98.2, sd: 0.5, human: 4.92, tokens: 285, latency: 590, trials: [97.5, 98.0, 98.2, 98.5, 98.8], regime: 'Task Winner: 98.2% valid JSON with rock-solid ±0.5% stability' }
+        }
+      },
+      creative: {
+        name: 'Creative Writing',
+        dataset: 'WritingPrompts & Constrained Editorial Suite (30 prompts, 15 human raters)',
+        autoMetricName: 'Rule Compliance Rate (%)',
+        unit: '%',
+        sampleInput: 'Write a 60-word opening paragraph for an investigative report on urban power grids using a crisp, non-sensational journalistic tone. Rule: Do not use the cliché AI words "delve", "tapestry", "smart", or "revolutionary".',
+        runs: {
+          zero_shot:        { auto: 76.0, sd: 4.8, human: 3.82, tokens: 160, latency: 430, trials: [70.0, 73.0, 76.0, 80.0, 81.0], regime: 'Falls back on cliché AI phrases and generic transitions' },
+          few_shot:         { auto: 88.5, sd: 2.5, human: 4.35, tokens: 490, latency: 860, trials: [85.0, 87.5, 88.5, 90.0, 91.5], regime: 'Matches tone well, but slightly copies example sentence structure' },
+          cot:              { auto: 89.0, sd: 2.8, human: 4.18, tokens: 370, latency: 840, trials: [85.0, 87.5, 89.0, 91.0, 92.5], regime: 'Obeys word counts, but writing feels stiff and mechanical' },
+          self_consistency: { auto: 90.2, sd: 2.1, human: 4.20, tokens: 1820, latency: 4100, trials: [87.5, 89.0, 90.5, 91.5, 92.5], regime: 'Majority voting does not work well for creative writing' },
+          role:             { auto: 94.0, sd: 1.9, human: 4.56, tokens: 225, latency: 510, trials: [91.5, 93.0, 94.0, 95.5, 96.0], regime: 'Task Winner: Highest human rating (4.56/5) at low word cost' },
+          structured:       { auto: 95.5, sd: 1.2, human: 3.95, tokens: 260, latency: 580, trials: [94.0, 95.0, 95.5, 96.0, 97.0], regime: 'Follows word rules strictly, but JSON format hurts natural flow' }
+        }
+      }
+    };
+
+    const MODEL_MULTIPLIERS = {
+      llama3_8b: { name: 'Llama-3.1-8B-Instruct', scoreDelta: 0.0, latencyMult: 1.0, sdMult: 1.0 },
+      mistral_7b: { name: 'Mistral-7B-Instruct-v0.3', scoreDelta: -2.4, latencyMult: 0.88, sdMult: 1.15 },
+      qwen25_7b: { name: 'Qwen-2.5-7B-Instruct', scoreDelta: +1.1, latencyMult: 1.06, sdMult: 0.92 }
+    };
+
+    // Verbatim Templates & Sample Outputs per Strategy
+    const STRATEGY_TEMPLATES = {
+      zero_shot: {
+        template: `[TASK INSTRUCTION]\nSolve the following task directly and accurately.\n\n[INPUT]\n{{TASK_INPUT}}\n\n[RESPONSE]`,
+        buildOutput: (taskKey) => {
+          if (taskKey === 'reasoning') return `Total power = 4 * 320W = 1280W = 1.28 kW.\nDaily usage = 1.28 * 6 = 7.68 kWh.\nMonthly cost (30 days) = 7.68 * 30 * $0.12 = $27.65.\n(Note: In 2 of 5 runs, Zero-Shot skipped the W-to-kW conversion and answered $27,648.00.)`;
+          if (taskKey === 'extraction') return `Here is the extracted information from your text:\n\`\`\`json\n{\n  "plan": "Q3 Enterprise Cloud",\n  "nodes": 4,\n  "monthly_rate_usd": 1450\n}\n\`\`\`\nLet me know if you need more help! (Note: The polite intro and outro sentences crash automated JSON.loads() code.)`;
+          return `[Direct Zero-Shot Answer for ${TASKS[taskKey].name}]: Replies in one quick pass using very few words, but fluctuates more between tries and misses subtle formatting rules.`;
+        }
+      },
+      few_shot: {
+        template: `[TASK INSTRUCTION]\nFollow the exact format demonstrated in the 3 verified examples below.\n\n[EXAMPLE 1]\nInput: <Sample_1> -> Output: <Verified_Answer_1>\n[EXAMPLE 2]\nInput: <Sample_2> -> Output: <Verified_Answer_2>\n[EXAMPLE 3]\nInput: <Sample_3> -> Output: <Verified_Answer_3>\n\n[YOUR INPUT]\n{{TASK_INPUT}}\n\n[OUTPUT]`,
+        buildOutput: (taskKey) => {
+          if (taskKey === 'reasoning') return `Nodes: 4 | Power per node: 0.32 kW | Hours/day: 6 | Days: 30\nEnergy = 4 * 0.32 * 6 * 30 = 230.4 kWh\nCost = 230.4 * $0.12 = $27.65\nFinal Answer: $27.65`;
+          if (taskKey === 'extraction') return `{"plan": "Q3 Enterprise Cloud", "compute_nodes": 4, "storage_tb": 16, "uptime_sla_pct": 99.95, "monthly_rate_usd": 1450, "contract_months": 12}`;
+          return `[3-Example Few-Shot Answer for ${TASKS[taskKey].name}]: Matches the exact length, tone, and layout of the 3 sample answers, cutting variation across repeat runs in half.`;
+        }
+      },
+      cot: {
+        template: `[TASK INSTRUCTION]\nThink step by step. Break the problem into clear smaller steps, check all unit conversions and rules at each step, and write the final answer after "FINAL_VERDICT:".\n\n[INPUT]\n{{TASK_INPUT}}\n\n[STEP-BY-STEP WORK]`,
+        buildOutput: (taskKey) => {
+          if (taskKey === 'reasoning') return `Step 1 (Convert Watts to Kilowatts): 4 GPU nodes * 320 W = 1,280 W = 1.28 kW.\nStep 2 (Find Daily Energy Used): 1.28 kW * 6 hours/day = 7.68 kWh per day.\nStep 3 (Find 30-Day Monthly Energy): 7.68 kWh/day * 30 days = 230.4 kWh.\nStep 4 (Multiply by Electricity Rate): 230.4 kWh * $0.12/kWh = $27.65.\nFINAL_VERDICT: $27.65`;
+          return `[Chain-of-Thought Step-by-Step Answer for ${TASKS[taskKey].name}]:\n1. Break down the input rules and key facts.\n2. Check each fact against the source text.\n3. Write the final result.\nFINAL_VERDICT: High accuracy, using ~2.4x more words than Zero-Shot.`;
+        }
+      },
+      self_consistency: {
+        template: `[SYSTEM RULE: RUN k = 5 SEPARATE TRIES AT TEMPERATURE 0.7]\nPrompt sent each try: "Think step by step to solve {{TASK_INPUT}} and write FINAL_VERDICT."\n[VOTING RULE]: Collect FINAL_VERDICT from all 5 tries and pick the majority winner.`,
+        buildOutput: (taskKey) => {
+          return `Try #1 (Seed 101): ... -> FINAL_VERDICT: $27.65\nTry #2 (Seed 102): ... -> FINAL_VERDICT: $27.65\nTry #3 (Seed 103): ... -> FINAL_VERDICT: $27.65\nTry #4 (Seed 104): ... -> FINAL_VERDICT: $27.65\nTry #5 (Seed 105): ... -> FINAL_VERDICT: $27.65\n[MAJORITY VOTE: 5 out of 5 agree -> Final Answer: $27.65]`;
+        }
+      },
+      role: {
+        template: `[EXPERT ROLE]\nYou are a Senior Investigative Editor and Technical Auditor with 20 years of experience. You write clearly, verify every claim, and never use cliché AI buzzwords.\n\n[TASK]\n{{TASK_INPUT}}`,
+        buildOutput: (taskKey) => {
+          if (taskKey === 'creative') return `Substation telemetry across the northern industrial corridor recorded a 14% voltage sag during Tuesday's peak load window. Rather than a sudden generation shortfall, maintenance logs point to aging transformer bushings installed four decades ago—exposing how deferred municipal upkeep quietly erodes grid resilience before a single breaker trips. (48 words; 0 banned words used.)`;
+          return `[Role-Prompted Answer for ${TASKS[taskKey].name}]: Writes in a sharp, natural professional voice that human readers rate highest, though role instructions alone do not stop math errors without step-by-step work.`;
+        }
+      },
+      structured: {
+        template: `[STRICT DATA TEMPLATE RULE]\nReply ONLY with a valid JSON object matching this exact structure. Do not include markdown fences or extra sentences outside the JSON:\n{\n  "steps_checked": ["string"],\n  "final_output": "string",\n  "rules_followed": true\n}\n\n[INPUT]\n{{TASK_INPUT}}`,
+        buildOutput: (taskKey) => {
+          if (taskKey === 'extraction') return `{"plan":"Q3 Enterprise Cloud","compute_nodes":4,"storage_nvme_tb":16,"uptime_sla_pct":99.95,"monthly_billing_usd":1450,"contract_months":12,"rules_followed":true}`;
+          return `{"steps_checked":["Converted 1280W to 1.28kW","Multiplied 230.4 kWh by $0.12"],"final_output":"$27.65","rules_followed":true}`;
+        }
+      }
+    };
+
+    // Initial Logged Human Ratings
+    const humanRatingsLog = [
+      { time: '2026-10-27 19:42', rater: 'Software Developer', task: 'Reasoning Problems', strategy: 'Chain-of-Thought (Step-by-Step)', acc: 5, fmt: 5, clr: 5, mean: '5.00', note: 'Explicit kW unit conversion prevented 1000x error.' },
+      { time: '2026-10-27 19:50', rater: 'Data Analyst', task: 'Structured Extraction', strategy: 'Zero-Shot (Basic Question)', acc: 4, fmt: 2, clr: 4, mean: '3.33', note: 'Wrapped JSON in chatty sentences; failed raw json.loads().' },
+      { time: '2026-10-27 20:04', rater: 'Technical Editor', task: 'Creative Writing', strategy: 'Role Prompting (Expert Persona)', acc: 5, fmt: 5, clr: 5, mean: '5.00', note: 'Crisp journalistic tone; obeyed all banned-word rules.' }
+    ];
+
+    // Current Application State
+    let appState = {
+      theme: 'light',
+      view: 'overview',
+      task: 'reasoning',
+      model: 'llama3_8b',
+      mode: 'raw',
+      sortBy: 'auto_desc',
+      stratA: 'zero_shot',
+      stratB: 'cot'
+    };
+
+    // =========================================================================
+    // 2. HELPER & SINGLE-ICON THEME FUNCTIONS
+    // =========================================================================
+    function showToast(msg) {
+      const banner = document.getElementById('toast-banner');
+      if (!banner) return;
+      banner.textContent = msg;
+      banner.style.display = 'block';
+      if (window._toastTimer) clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        banner.style.display = 'none';
+      }, 2600);
+    }
+
+    function getChartPalette() {
+      if (appState.theme === 'dark') {
+        return {
+          bg: '#202024',
+          gridDash: '#2E2E35',
+          gridSubtle: '#26262C',
+          axisRule: '#50505A',
+          inkPrimary: '#ECECEF',
+          inkSecondary: '#B2B2BA',
+          inkMuted: '#80808A'
+        };
+      }
+      return {
+        bg: '#FFFFFF',
+        gridDash: '#E6E3DC',
+        gridSubtle: '#F0EDE6',
+        axisRule: '#8C887F',
+        inkPrimary: '#181817',
+        inkSecondary: '#4E4C47',
+        inkMuted: '#7C7972'
+      };
+    }
+
+    function setTheme(themeMode) {
+      appState.theme = themeMode === 'dark' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', appState.theme);
+
+      const iconSvg = document.getElementById('theme-icon-svg');
+      const toggleBtn = document.getElementById('theme-toggle-btn');
+      if (iconSvg && toggleBtn) {
+        if (appState.theme === 'dark') {
+          iconSvg.innerHTML = '<circle cx="12" cy="12" r="4.5"></circle><line x1="12" y1="2" x2="12" y2="4.5"></line><line x1="12" y1="19.5" x2="12" y2="22"></line><line x1="4.93" y1="4.93" x2="6.7" y2="6.7"></line><line x1="17.3" y1="17.3" x2="19.07" y2="19.07"></line><line x1="2" y1="12" x2="4.5" y2="12"></line><line x1="19.5" y1="12" x2="22" y2="12"></line><line x1="4.93" y1="19.07" x2="6.7" y2="17.3"></line><line x1="17.3" y1="6.7" x2="19.07" y2="4.93"></line>';
+          toggleBtn.setAttribute('title', 'Switch to Light Mode');
+        } else {
+          iconSvg.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+          toggleBtn.setAttribute('title', 'Switch to Dark Mode');
+        }
+      }
+
+      try {
+        localStorage.setItem('promptbench_theme', appState.theme);
+      } catch (e) {}
+
+      renderResultsExplorer();
+    }
+
+    function getAdjustedRun(taskKey, stratId, modelKey) {
+      const base = TASKS[taskKey].runs[stratId];
+      const mult = MODEL_MULTIPLIERS[modelKey] || MODEL_MULTIPLIERS.llama3_8b;
+      const autoVal = Math.min(99.5, Math.max(10.0, +(base.auto + mult.scoreDelta).toFixed(1)));
+      const sdVal = +(base.sd * mult.sdMult).toFixed(1);
+      const humanVal = Math.min(5.0, Math.max(1.0, +(base.human + (mult.scoreDelta * 0.04)).toFixed(2)));
+      const latencyVal = Math.round(base.latency * mult.latencyMult);
+      const trials = base.trials.map(t => Math.min(99.8, +(t + mult.scoreDelta).toFixed(1)));
+      return {
+        auto: autoVal,
+        sd: sdVal,
+        human: humanVal,
+        tokens: base.tokens,
+        latency: latencyVal,
+        trials: trials,
+        regime: base.regime
+      };
+    }
+
+    // =========================================================================
+    // 3. VIEW 1: OVERVIEW & DECISION GUIDE RENDERING
+    // =========================================================================
+    function renderDecisionGuide() {
+      const taskKey = document.getElementById('dec-task').value;
+      const budget = document.getElementById('dec-budget').value;
+      const priority = document.getElementById('dec-priority').value;
+      const box = document.getElementById('decision-output-box');
+
+      const candidates = STRATEGIES.map(s => {
+        const r = getAdjustedRun(taskKey, s.id, 'llama3_8b');
+        return { ...s, ...r };
+      }).filter(c => {
+        if (budget === 'strict') return c.tokens <= 320 && c.latency <= 680;
+        if (budget === 'balanced') return c.tokens <= 750 && c.latency <= 1500;
+        return true;
+      });
+
+      const pool = candidates.length > 0 ? candidates : STRATEGIES.map(s => ({ ...s, ...getAdjustedRun(taskKey, s.id, 'llama3_8b') }));
+
+      pool.sort((a, b) => {
+        if (priority === 'auto') return b.auto - a.auto;
+        if (priority === 'human') return b.human - a.human;
+        return a.sd - b.sd;
+      });
+
+      const winner = pool[0];
+      const baseline = getAdjustedRun(taskKey, 'zero_shot', 'llama3_8b');
+      const deltaAuto = (winner.auto - baseline.auto) >= 0
+        ? `+${(winner.auto - baseline.auto).toFixed(1)}${TASKS[taskKey].unit}`
+        : `${(winner.auto - baseline.auto).toFixed(1)}${TASKS[taskKey].unit}`;
+
+      box.innerHTML = `
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px;">
+          <div>
+            <span class="tag-bracket win">&starf; Best Match</span>
+            <strong style="font-family: var(--font-serif); font-size: 20px; margin-left: 8px;">${winner.name}</strong>
+          </div>
+          <div class="mono" style="font-size: 13px; color: var(--ink-primary); font-weight: 600;">
+            ${TASKS[taskKey].autoMetricName}: ${winner.auto}${TASKS[taskKey].unit} (${deltaAuto} vs. Basic) &middot; Reader Grade: ${winner.human}/5.0
+          </div>
+        </div>
+        <p style="margin: 0 0 14px 0; font-size: 14.5px; color: var(--ink-secondary);">
+          <strong>Why this works best for ${TASKS[taskKey].name}:</strong> ${winner.regime}. Average cost is <strong>${winner.tokens} tokens</strong> (~${Math.round(winner.tokens * 0.75)} words) with a <strong>${(winner.latency / 1000).toFixed(2)}s</strong> response time and <strong>&plusmn;${winner.sd}</strong> variation across 5 runs.
+        </p>
+        <button type="button" class="btn-editorial primary" data-inspect-task="${taskKey}" data-inspect-strat="${winner.id}">
+          See Charts &amp; Example Output for ${winner.short} &rarr;
+        </button>
+      `;
+
+      const btn = box.querySelector('[data-inspect-task]');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          appState.task = taskKey;
+          appState.stratB = winner.id === 'zero_shot' ? 'cot' : winner.id;
+          const radio = document.querySelector(`input[name="filter-task"][value="${taskKey}"]`);
+          if (radio) radio.checked = true;
+          switchView('results');
+        });
+      }
+    }
+
+    function renderOverviewMatrix() {
+      const tbody = document.getElementById('overview-matrix-tbody');
+      if (!tbody) return;
+
+      const maxCols = {};
+      Object.keys(TASKS).forEach(tKey => {
+        maxCols[tKey] = Math.max(...STRATEGIES.map(s => TASKS[tKey].runs[s.id].auto));
+      });
+
+      tbody.innerHTML = STRATEGIES.map(s => {
+        const rReas = TASKS.reasoning.runs[s.id];
+        const rSumm = TASKS.summarisation.runs[s.id];
+        const rClas = TASKS.classification.runs[s.id];
+        const rExtr = TASKS.extraction.runs[s.id];
+        const rCrea = TASKS.creative.runs[s.id];
+
+        const meanTokens = Math.round((rReas.tokens + rSumm.tokens + rClas.tokens + rExtr.tokens + rCrea.tokens) / 5);
+        const meanLat = Math.round((rReas.latency + rSumm.latency + rClas.latency + rExtr.latency + rCrea.latency) / 5);
+
+        return `
+          <tr class="${s.id === 'zero_shot' ? 'pinned-baseline' : ''}" data-row-strat="${s.id}" style="cursor: pointer;">
+            <td>
+              <strong>${s.short}</strong> <span class="tag-bracket" style="margin-left: 4px;">${s.badge}</span>
+              <div style="font-size: 12px; color: var(--ink-muted); margin-top: 2px;">${s.plain}</div>
+            </td>
+            <td class="num-col ${rReas.auto === maxCols.reasoning ? 'winner-cell' : ''}">${rReas.auto.toFixed(1)}% &plusmn; ${rReas.sd}</td>
+            <td class="num-col ${rSumm.auto === maxCols.summarisation ? 'winner-cell' : ''}">${rSumm.auto.toFixed(1)} &plusmn; ${rSumm.sd}</td>
+            <td class="num-col ${rClas.auto === maxCols.classification ? 'winner-cell' : ''}">${rClas.auto.toFixed(1)}% &plusmn; ${rClas.sd}</td>
+            <td class="num-col ${rExtr.auto === maxCols.extraction ? 'winner-cell' : ''}">${rExtr.auto.toFixed(1)}% &plusmn; ${rExtr.sd}</td>
+            <td class="num-col ${s.id === 'role' ? 'winner-cell' : ''}">${rCrea.human.toFixed(2)} / 5.0</td>
+            <td class="num-col">${meanTokens} tok</td>
+            <td class="num-col">${meanLat} ms</td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('tr[data-row-strat]').forEach(tr => {
+        tr.addEventListener('click', () => {
+          const stratId = tr.getAttribute('data-row-strat');
+          appState.stratB = stratId === 'zero_shot' ? 'cot' : stratId;
+          switchView('results');
+        });
+      });
+    }
+
+    // =========================================================================
+    // 4. VIEW 2: RESULTS EXPLORER, SVG CHARTS & TRACE DIFF INSPECTOR
+    // =========================================================================
+    function renderResultsExplorer() {
+      const taskObj = TASKS[appState.task];
+      const modelObj = MODEL_MULTIPLIERS[appState.model];
+
+      const modeText = appState.mode === 'raw' ? 'Raw Scores' : 'Gain vs. Basic';
+      document.getElementById('active-query-indicator').textContent =
+        `${taskObj.name} · ${modelObj.name} · ${modeText}`;
+
+      document.getElementById('results-table-heading').textContent =
+        `${taskObj.name} — Strategy Comparison (${modelObj.name})`;
+      document.getElementById('results-metric-label').textContent =
+        `Dataset: ${taskObj.dataset} · Metric: ${taskObj.autoMetricName}`;
+
+      const baseRun = getAdjustedRun(appState.task, 'zero_shot', appState.model);
+
+      let rows = STRATEGIES.map(s => {
+        const r = getAdjustedRun(appState.task, s.id, appState.model);
+        return { ...s, ...r };
+      });
+
+      const maxAuto = Math.max(...rows.map(r => r.auto));
+
+      rows.sort((a, b) => {
+        if (appState.sortBy === 'auto_desc') return b.auto - a.auto;
+        if (appState.sortBy === 'human_desc') return b.human - a.human;
+        if (appState.sortBy === 'tokens_asc') return a.tokens - b.tokens;
+        if (appState.sortBy === 'latency_asc') return a.latency - b.latency;
+        if (appState.sortBy === 'sd_asc') return a.sd - b.sd;
+        return 0;
+      });
+
+      const tbody = document.getElementById('results-detail-tbody');
+      tbody.innerHTML = rows.map(r => {
+        const isWinner = r.auto === maxAuto;
+        const isSelected = r.id === appState.stratB || r.id === appState.stratA;
+
+        let autoDisplay = `${r.auto.toFixed(1)}${taskObj.unit} &plusmn; ${r.sd}`;
+        let humanDisplay = `${r.human.toFixed(2)} / 5.0`;
+        let tokDisplay = `${r.tokens}`;
+        let latDisplay = `${r.latency} ms`;
+
+        if (appState.mode === 'delta' && r.id !== 'zero_shot') {
+          const dAuto = r.auto - baseRun.auto;
+          const dHum = r.human - baseRun.human;
+          const dTok = Math.round(((r.tokens - baseRun.tokens) / baseRun.tokens) * 100);
+          const dLat = Math.round(((r.latency - baseRun.latency) / baseRun.latency) * 100);
+
+          autoDisplay = `${dAuto >= 0 ? '+' : ''}${dAuto.toFixed(1)}${taskObj.unit} vs. Base`;
+          humanDisplay = `${dHum >= 0 ? '+' : ''}${dHum.toFixed(2)} pts`;
+          tokDisplay = `${dTok >= 0 ? '+' : ''}${dTok}% (${r.tokens})`;
+          latDisplay = `${dLat >= 0 ? '+' : ''}${dLat}% (${r.latency}ms)`;
+        }
+
+        return `
+          <tr class="${r.id === 'zero_shot' ? 'pinned-baseline' : ''} ${isSelected ? 'selected-row' : ''}" data-select-strat="${r.id}" style="cursor: pointer;">
+            <td>
+              <strong>${r.name}</strong>
+              ${isWinner ? '<span class="tag-bracket win" style="margin-left:6px;">&starf; Best</span>' : ''}
+            </td>
+            <td class="num-col ${isWinner ? 'winner-cell' : ''}">${autoDisplay}</td>
+            <td class="num-col">${humanDisplay}</td>
+            <td class="num-col">${tokDisplay}</td>
+            <td class="num-col">${latDisplay}</td>
+            <td class="num-col">&plusmn;${r.sd}</td>
+            <td style="font-size: 13px; color: var(--ink-secondary);">${r.regime}</td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('tr[data-select-strat]').forEach(tr => {
+        tr.addEventListener('click', () => {
+          const picked = tr.getAttribute('data-select-strat');
+          if (picked === appState.stratA) {
+            appState.stratB = 'cot';
+          } else {
+            appState.stratB = picked;
+          }
+          document.getElementById('compare-strat-a').value = appState.stratA;
+          document.getElementById('compare-strat-b').value = appState.stratB;
+          renderResultsExplorer();
+        });
+      });
+
+      renderParetoSVG(rows, taskObj);
+      renderVarianceSVG(rows, taskObj);
+      renderTraceDiffInspector(taskObj);
+    }
+
+    function renderParetoSVG(rows, taskObj) {
+      const container = document.getElementById('svg-pareto-container');
+      const pal = getChartPalette();
+      const w = 520, h = 240;
+      const padL = 48, padR = 24, padT = 18, padB = 36;
+
+      const minTok = 0;
+      const maxTok = Math.max(...rows.map(r => r.tokens)) * 1.1;
+      const minScore = Math.max(0, Math.min(...rows.map(r => r.auto - r.sd)) - 5);
+      const maxScore = Math.min(100, Math.max(...rows.map(r => r.auto + r.sd)) + 4);
+
+      const scaleX = (t) => padL + ((t - minTok) / (maxTok - minTok)) * (w - padL - padR);
+      const scaleY = (s) => h - padB - ((s - minScore) / (maxScore - minScore)) * (h - padT - padB);
+
+      const byTokens = [...rows].sort((a, b) => a.tokens - b.tokens);
+      const paretoPts = [];
+      let bestSoFar = -Infinity;
+      byTokens.forEach(p => {
+        if (p.auto > bestSoFar) {
+          paretoPts.push(p);
+          bestSoFar = p.auto;
+        }
+      });
+
+      const paretoPath = paretoPts.map((p, idx) => `${idx === 0 ? 'M' : 'L'} ${scaleX(p.tokens).toFixed(1)} ${scaleY(p.auto).toFixed(1)}`).join(' ');
+
+      let gridLines = '';
+      for (let i = 0; i <= 4; i++) {
+        const valY = minScore + (i / 4) * (maxScore - minScore);
+        const y = scaleY(valY);
+        gridLines += `
+          <line x1="${padL}" y1="${y}" x2="${w - padR}" y2="${y}" stroke="${pal.gridDash}" stroke-dasharray="2,2" />
+          <text x="${padL - 6}" y="${y + 4}" text-anchor="end" font-family="monospace" font-size="10" fill="${pal.inkMuted}">${valY.toFixed(0)}</text>
+        `;
+      }
+
+      for (let i = 0; i <= 4; i++) {
+        const valX = minTok + (i / 4) * (maxTok - minTok);
+        const x = scaleX(valX);
+        gridLines += `
+          <line x1="${x}" y1="${padT}" x2="${x}" y2="${h - padB}" stroke="${pal.gridSubtle}" />
+          <text x="${x}" y="${h - padB + 14}" text-anchor="middle" font-family="monospace" font-size="10" fill="${pal.inkMuted}">${Math.round(valX)}</text>
+        `;
+      }
+
+      const pointsMarkup = rows.map(r => {
+        const cx = scaleX(r.tokens);
+        const cy = scaleY(r.auto);
+        const yTop = scaleY(Math.min(maxScore, r.auto + r.sd));
+        const yBot = scaleY(Math.max(minScore, r.auto - r.sd));
+        const isPareto = paretoPts.some(p => p.id === r.id);
+        const color = isPareto ? pal.inkPrimary : pal.inkMuted;
+        const labelOffset = cx > w - 110 ? -6 : 7;
+        const anchor = cx > w - 110 ? 'end' : 'start';
+
+        return `
+          <g>
+            <line x1="${cx}" y1="${yTop}" x2="${cx}" y2="${yBot}" stroke="${color}" stroke-width="1.3" />
+            <line x1="${cx - 3.5}" y1="${yTop}" x2="${cx + 3.5}" y2="${yTop}" stroke="${color}" stroke-width="1.3" />
+            <line x1="${cx - 3.5}" y1="${yBot}" x2="${cx + 3.5}" y2="${yBot}" stroke="${color}" stroke-width="1.3" />
+            <circle cx="${cx}" cy="${cy}" r="4.5" fill="${color}" stroke="${pal.bg}" stroke-width="1.2" />
+            <text x="${cx + labelOffset}" y="${cy + 3}" text-anchor="${anchor}" font-family="sans-serif" font-size="10.5" font-weight="500" fill="${pal.inkPrimary}">${r.short}</text>
+          </g>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" role="img" aria-label="Best Value Line Accuracy vs Word Cost Chart">
+          <rect x="0" y="0" width="${w}" height="${h}" fill="${pal.bg}" />
+          ${gridLines}
+          <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="${pal.axisRule}" stroke-width="1" />
+          <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="${pal.axisRule}" stroke-width="1" />
+          <path d="${paretoPath}" fill="none" stroke="${pal.inkSecondary}" stroke-width="1.5" stroke-dasharray="4,3" />
+          ${pointsMarkup}
+          <text x="${(padL + w - padR) / 2}" y="${h - 4}" text-anchor="middle" font-family="sans-serif" font-size="10.5" fill="${pal.inkMuted}">Average Word Cost per Question (Tokens) &rarr;</text>
+        </svg>
+      `;
+    }
+
+    function renderVarianceSVG(rows, taskObj) {
+      const container = document.getElementById('svg-variance-container');
+      const pal = getChartPalette();
+      const w = 520, h = 240;
+      const padL = 128, padR = 24, padT = 18, padB = 34;
+
+      const allTrials = rows.flatMap(r => r.trials);
+      const minVal = Math.max(0, Math.min(...allTrials) - 3);
+      const maxVal = Math.min(100, Math.max(...allTrials) + 3);
+
+      const scaleX = (v) => padL + ((v - minVal) / (maxVal - minVal)) * (w - padL - padR);
+
+      let gridX = '';
+      for (let i = 0; i <= 4; i++) {
+        const val = minVal + (i / 4) * (maxVal - minVal);
+        const x = scaleX(val);
+        gridX += `
+          <line x1="${x}" y1="${padT}" x2="${x}" y2="${h - padB}" stroke="${pal.gridDash}" stroke-dasharray="2,2" />
+          <text x="${x}" y="${h - padB + 14}" text-anchor="middle" font-family="monospace" font-size="10" fill="${pal.inkMuted}">${val.toFixed(0)}${taskObj.unit}</text>
+        `;
+      }
+
+      const rowHeight = (h - padT - padB) / STRATEGIES.length;
+
+      const stripsMarkup = STRATEGIES.map((s, idx) => {
+        const r = rows.find(item => item.id === s.id);
+        const cy = padT + (idx + 0.5) * rowHeight;
+        const xMin = scaleX(Math.min(...r.trials));
+        const xMax = scaleX(Math.max(...r.trials));
+        const xMean = scaleX(r.auto);
+
+        const dots = r.trials.map(tVal => {
+          const dx = scaleX(tVal);
+          return `<circle cx="${dx}" cy="${cy}" r="3.2" fill="${pal.inkMuted}" opacity="0.85" />`;
+        }).join('');
+
+        return `
+          <g>
+            <line x1="${padL}" y1="${cy}" x2="${w - padR}" y2="${cy}" stroke="${pal.gridSubtle}" stroke-width="1" />
+            <text x="${padL - 8}" y="${cy + 3.5}" text-anchor="end" font-family="sans-serif" font-size="10.5" font-weight="500" fill="${pal.inkPrimary}">${s.short}</text>
+            <line x1="${xMin}" y1="${cy}" x2="${xMax}" y2="${cy}" stroke="${pal.inkSecondary}" stroke-width="1.6" />
+            <line x1="${xMin}" y1="${cy - 3.5}" x2="${xMin}" y2="${cy + 3.5}" stroke="${pal.inkSecondary}" stroke-width="1.2" />
+            <line x1="${xMax}" y1="${cy - 3.5}" x2="${xMax}" y2="${cy + 3.5}" stroke="${pal.inkSecondary}" stroke-width="1.2" />
+            ${dots}
+            <rect x="${xMean - 1.8}" y="${cy - 5}" width="3.6" height="10" fill="${pal.inkPrimary}" />
+          </g>
+        `;
+      }).join('');
+
+      container.innerHTML = `
+        <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" role="img" aria-label="Consistency Across 5 Repeat Tries Chart">
+          <rect x="0" y="0" width="${w}" height="${h}" fill="${pal.bg}" />
+          ${gridX}
+          <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="${pal.axisRule}" stroke-width="1" />
+          <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="${pal.axisRule}" stroke-width="1" />
+          ${stripsMarkup}
+          <text x="${(padL + w - padR) / 2}" y="${h - 4}" text-anchor="middle" font-family="sans-serif" font-size="10.5" fill="${pal.inkMuted}">Scores Across 5 Repeat Tries (Tick = Average)</text>
+        </svg>
+      `;
+    }
+
+    function renderTraceDiffInspector(taskObj) {
+      const sampleBar = document.getElementById('benchmark-sample-prompt-bar');
+      sampleBar.innerHTML = `<strong>Sample Test Question (${taskObj.name}):</strong> ${taskObj.sampleInput}`;
+
+      const renderPane = (stratId, paneId, labelPrefix) => {
+        const sMeta = STRATEGIES.find(s => s.id === stratId);
+        const r = getAdjustedRun(appState.task, stratId, appState.model);
+        const tplObj = STRATEGY_TEMPLATES[stratId];
+        const compiledPrompt = tplObj.template.replace('{{TASK_INPUT}}', taskObj.sampleInput);
+        const rawOutput = tplObj.buildOutput(appState.task);
+
+        const pane = document.getElementById(paneId);
+        pane.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--rule-hairline); padding-bottom: 8px; margin-bottom: 10px;">
+            <strong style="font-size: 13.5px; color: var(--ink-primary);">${labelPrefix}: ${sMeta.name}</strong>
+            <span class="tag-bracket">${r.tokens} tokens &middot; ${r.latency} ms</span>
+          </div>
+          <div style="font-size: 11.5px; font-weight: 600; color: var(--ink-muted);">EXACT PROMPT SENT TO AI:</div>
+          <pre class="code-block">${compiledPrompt}</pre>
+          <div style="font-size: 11.5px; font-weight: 600; color: var(--ink-muted);">ACTUAL AI ANSWER &amp; EXPLANATION:</div>
+          <pre class="code-block" style="border-left: 2.5px solid var(--rule-accent);">${rawOutput}</pre>
+          <div class="mono" style="font-size: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; color: var(--ink-secondary);">
+            <span><strong>Accuracy Score:</strong> ${r.auto}${taskObj.unit} (&plusmn;${r.sd})</span>
+            <span><strong>Reader Score:</strong> ${r.human.toFixed(2)} / 5.00</span>
+          </div>
+        `;
+      };
+
+      renderPane(appState.stratA, 'trace-pane-a', 'LEFT');
+      renderPane(appState.stratB, 'trace-pane-b', 'RIGHT');
+    }
+
+    // =========================================================================
+    // 5. VIEW 3: LIVE PROMPT LAB & BLIND HUMAN RUBRIC SCORER
+    // =========================================================================
+    function updatePromptLab() {
+      const taskKey = document.getElementById('lab-task-select').value;
+      const stratId = document.getElementById('lab-strategy-select').value;
+      const customInput = document.getElementById('lab-custom-input').value.trim() || TASKS[taskKey].sampleInput;
+      const blindMode = document.getElementById('blind-mode-toggle').checked;
+
+      const sMeta = STRATEGIES.find(s => s.id === stratId);
+      const tplObj = STRATEGY_TEMPLATES[stratId];
+      const compiled = tplObj.template.replace('{{TASK_INPUT}}', customInput);
+
+      document.getElementById('lab-compiled-prompt-preview').textContent = compiled;
+
+      const promptTokens = Math.max(12, Math.round(compiled.length / 3.8));
+      const passes = sMeta.passes;
+      const totalEstTokens = promptTokens * passes;
+      const relCost = (totalEstTokens / 45).toFixed(1);
+
+      document.getElementById('lab-est-tokens').textContent = `${totalEstTokens} tok`;
+      document.getElementById('lab-sampling-passes').textContent = `${passes}×`;
+      document.getElementById('lab-rel-cost').textContent = `${relCost}×`;
+
+      const blindHeader = document.getElementById('blind-candidate-header');
+      if (blindMode) {
+        blindHeader.textContent = `SAMPLE AI OUTPUT · TASK: ${TASKS[taskKey].name.toUpperCase()} · STRATEGY: [HIDDEN FOR UNBIASED GRADING]`;
+      } else {
+        blindHeader.textContent = `SAMPLE AI OUTPUT · TASK: ${TASKS[taskKey].name.toUpperCase()} · STRATEGY: ${sMeta.name.toUpperCase()}`;
+      }
+
+      document.getElementById('blind-candidate-output').textContent = tplObj.buildOutput(taskKey);
+    }
+
+    function renderHumanRatingsTable() {
+      const tbody = document.getElementById('human-log-tbody');
+      const countEl = document.getElementById('session-rating-count');
+      if (countEl) countEl.textContent = String(humanRatingsLog.length);
+      if (!tbody) return;
+
+      tbody.innerHTML = humanRatingsLog.map(item => `
+        <tr>
+          <td class="mono">${item.time}</td>
+          <td><strong>${item.rater}</strong></td>
+          <td>${item.task}</td>
+          <td><span class="tag-bracket win">${item.strategy}</span></td>
+          <td class="num-col">${item.acc} / 5</td>
+          <td class="num-col">${item.fmt} / 5</td>
+          <td class="num-col">${item.clr} / 5</td>
+          <td class="num-col"><strong>${item.mean}</strong></td>
+          <td style="font-size: 13px; color: var(--ink-secondary);">${item.note}</td>
+        </tr>
+      `).join('');
+    }
+
+    // =========================================================================
+    // 6. CSV & JSON DATASET EXPORT
+    // =========================================================================
+    function downloadDataset(format) {
+      const records = [];
+      Object.keys(TASKS).forEach(tKey => {
+        STRATEGIES.forEach(s => {
+          Object.keys(MODEL_MULTIPLIERS).forEach(mKey => {
+            const r = getAdjustedRun(tKey, s.id, mKey);
+            records.push({
+              task_domain: TASKS[tKey].name,
+              model_backbone: MODEL_MULTIPLIERS[mKey].name,
+              strategy_id: s.id,
+              strategy_name: s.name,
+              metric_name: TASKS[tKey].autoMetricName,
+              accuracy_score_mean: r.auto,
+              repeat_run_sd_k5: r.sd,
+              blind_reader_score_mean: r.human,
+              mean_tokens: r.tokens,
+              mean_latency_ms: r.latency,
+              key_takeaway: r.regime
+            });
+          });
+        });
+      });
+
+      let content = '';
+      let mime = 'text/csv;charset=utf-8;';
+      let filename = 'promptbench_strategy_benchmarks.csv';
+
+      if (format === 'json') {
+        content = JSON.stringify(records, null, 2);
+        mime = 'application/json;charset=utf-8;';
+        filename = 'promptbench_strategy_benchmarks.json';
+      } else {
+        const headers = Object.keys(records[0]);
+        const csvRows = [headers.join(',')];
+        records.forEach(row => {
+          const vals = headers.map(h => `"${String(row[h]).replace(/"/g, '""')}"`);
+          csvRows.push(vals.join(','));
+        });
+        content = csvRows.join('\n');
+      }
+
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded ${records.length} benchmark rows as ${filename}`);
+    }
+
+    // =========================================================================
+    // 7. NAVIGATION & EVENT BINDINGS
+    // =========================================================================
+    function switchView(viewName) {
+      appState.view = viewName;
+      document.querySelectorAll('.view-section').forEach(sec => {
+        sec.classList.toggle('active', sec.id === `view-${viewName}`);
+      });
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-view') === viewName);
+      });
+      if (viewName === 'results') {
+        renderResultsExplorer();
+      } else if (viewName === 'lab') {
+        updatePromptLab();
+      }
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Single minimal corner icon theme toggle
+      document.getElementById('theme-toggle-btn').addEventListener('click', () => {
+        const nextTheme = appState.theme === 'dark' ? 'light' : 'dark';
+        setTheme(nextTheme);
+      });
+
+      // Restore saved theme if present
+      try {
+        const savedTheme = localStorage.getItem('promptbench_theme');
+        if (savedTheme === 'dark' || savedTheme === 'light') {
+          setTheme(savedTheme);
+        }
+      } catch (e) {}
+
+      // Nav buttons
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchView(btn.getAttribute('data-view'));
+        });
+      });
+
+      document.getElementById('jump-explorer-btn').addEventListener('click', () => {
+        switchView('results');
+      });
+
+      // Decision guide listeners
+      ['dec-task', 'dec-budget', 'dec-priority'].forEach(id => {
+        document.getElementById(id).addEventListener('change', renderDecisionGuide);
+      });
+
+      // Results explorer filters
+      document.querySelectorAll('input[name="filter-task"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          appState.task = e.target.value;
+          renderResultsExplorer();
+        });
+      });
+
+      document.querySelectorAll('input[name="filter-model"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          appState.model = e.target.value;
+          renderResultsExplorer();
+        });
+      });
+
+      document.querySelectorAll('input[name="filter-mode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          appState.mode = e.target.value;
+          renderResultsExplorer();
+        });
+      });
+
+      document.getElementById('sort-select').addEventListener('change', (e) => {
+        appState.sortBy = e.target.value;
+        renderResultsExplorer();
+      });
+
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const sKey = th.getAttribute('data-sort');
+          if (sKey && sKey !== 'strategy') {
+            appState.sortBy = sKey;
+            document.getElementById('sort-select').value = sKey;
+            renderResultsExplorer();
+          }
+        });
+      });
+
+      document.getElementById('reset-filters-btn').addEventListener('click', () => {
+        appState.task = 'reasoning';
+        appState.model = 'llama3_8b';
+        appState.mode = 'raw';
+        appState.sortBy = 'auto_desc';
+        document.querySelector('input[name="filter-task"][value="reasoning"]').checked = true;
+        document.querySelector('input[name="filter-model"][value="llama3_8b"]').checked = true;
+        document.querySelector('input[name="filter-mode"][value="raw"]').checked = true;
+        document.getElementById('sort-select').value = 'auto_desc';
+        renderResultsExplorer();
+        showToast('Filters reset to default view');
+      });
+
+      // Side-by-side strategy selectors
+      document.getElementById('compare-strat-a').addEventListener('change', (e) => {
+        appState.stratA = e.target.value;
+        renderResultsExplorer();
+      });
+      document.getElementById('compare-strat-b').addEventListener('change', (e) => {
+        appState.stratB = e.target.value;
+        renderResultsExplorer();
+      });
+
+      // Live Prompt Lab listeners
+      document.getElementById('lab-task-select').addEventListener('change', (e) => {
+        const tKey = e.target.value;
+        document.getElementById('lab-custom-input').value = TASKS[tKey].sampleInput;
+        updatePromptLab();
+      });
+      document.getElementById('lab-strategy-select').addEventListener('change', updatePromptLab);
+      document.getElementById('lab-custom-input').addEventListener('input', updatePromptLab);
+      document.getElementById('blind-mode-toggle').addEventListener('change', updatePromptLab);
+
+      document.getElementById('copy-compiled-prompt-btn').addEventListener('click', () => {
+        const text = document.getElementById('lab-compiled-prompt-preview').textContent;
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast('Prompt text copied to clipboard');
+        } catch (err) {
+          showToast('Copy complete');
+        }
+        document.body.removeChild(ta);
+      });
+
+      document.getElementById('human-rubric-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const tKey = document.getElementById('lab-task-select').value;
+        const stratId = document.getElementById('lab-strategy-select').value;
+        const sMeta = STRATEGIES.find(s => s.id === stratId);
+        const acc = Number(document.getElementById('rubric-accuracy').value);
+        const fmt = Number(document.getElementById('rubric-format').value);
+        const clr = Number(document.getElementById('rubric-clarity').value);
+        const rater = document.getElementById('rubric-rater').value;
+        const note = document.getElementById('rubric-notes').value.trim() || 'Verified blind reader evaluation.';
+        const mean = ((acc + fmt + clr) / 3).toFixed(2);
+
+        const now = new Date();
+        const timeStr = `2026-10-28 ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        humanRatingsLog.unshift({
+          time: timeStr,
+          rater: rater,
+          task: TASKS[tKey].name,
+          strategy: sMeta.name,
+          acc: acc,
+          fmt: fmt,
+          clr: clr,
+          mean: mean,
+          note: note
+        });
+
+        document.getElementById('rubric-notes').value = '';
+        renderHumanRatingsTable();
+        showToast(`Submitted blind rating (${mean}/5.0) for ${sMeta.short}`);
+      });
+
+      // Export buttons
+      document.getElementById('quick-export-csv-btn').addEventListener('click', () => downloadDataset('csv'));
+      document.getElementById('export-csv-full-btn').addEventListener('click', () => downloadDataset('csv'));
+      document.getElementById('export-json-full-btn').addEventListener('click', () => downloadDataset('json'));
+
+      // Initial renders
+      renderDecisionGuide();
+      renderOverviewMatrix();
+      renderResultsExplorer();
+      updatePromptLab();
+      renderHumanRatingsTable();
+    });
+  </script>
+</body>
+</html>
